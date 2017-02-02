@@ -1,0 +1,35 @@
+= Reproducer of Artemis core client race condition
+
+This is a simple program using Artemis ActiveMQ core api to connect to a messaging broker running on Wildfly.
+It happens to me seeing a race condition of getting following exceptions when I try to do so.
+
+There is used Artemis Core client in version `1.5.2`
+
+```
+Caused by: org.apache.activemq.artemis.api.core.ActiveMQConnectionTimedOutException: AMQ119013: Timed out waiting to receive cluster topology. Group:null
+  at org.apache.activemq.artemis.core.client.impl.ServerLocatorImpl.createSessionFactory(ServerLocatorImpl.java:803) ~[artemis-core-client-1.5.2.jar:1.5.2]
+  at org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory.createConnectionInternal(ActiveMQConnectionFactory.java:752) ~[artemis-jms-client-1.5.2.jar:1.5.2]
+  ... 31 common frames omitted
+```
+
+and
+
+```
+Caused by: ActiveMQConnectionTimedOutException[errorType=CONNECTION_TIMEDOUT message=AMQ119013: Timed out waiting to receive cluster topology. Group:null]
+```
+
+== How to run
+
+. using Wildfly or JBoss EAP 7.1.x
+. add user `user` with role guest to application realm
+.. `echo 'user=c5568adea472163dfc00c19c6348a665' >> $JBOSS_HOME/standalone/configuration/application-users.properties`
+.. `echo 'user=guest' >> $JBOSS_HOME/standalone/configuration/application-roles.properties`
+. start app server in configuration `standalone-full.xml`
+. run the reproducer `mvn exec:java -Dexec.mainClass="org.jboss.qa.Main" -Djava.util.logging.config.file=src/main/resources/logging.properties`
+.. you can hopefully see the exception being emmitted
+. run the reproducer with byteman modification (you need to download Byteman and put it to appropriate path)
+```
+export MAVEN_OPTS="-javaagent:/opt/byteman/lib/byteman.jar=script:src/main/resources/sleep.btm"
+mvn exec:java -Dexec.mainClass="org.jboss.qa.Main" -Djava.util.logging.config.file=src/main/resources/logging.properties
+```
+

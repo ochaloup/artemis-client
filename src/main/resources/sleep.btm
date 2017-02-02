@@ -1,0 +1,10 @@
+RULE sleeep
+CLASS org.apache.activemq.artemis.core.client.impl.ClientSessionFactoryImpl$SessionFactoryTopologyHandler
+METHOD notifyNodeUp
+#AT ENTRY
+AT LINE 1329
+IF TRUE
+DO
+  System.out.println("sleeping...");
+  Thread.sleep(5000);
+ENDRULE
